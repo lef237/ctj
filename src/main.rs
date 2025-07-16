@@ -2,7 +2,7 @@ use clap::{Arg, Command};
 use csv::Reader;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
@@ -95,7 +95,7 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
 
         if all_records.is_empty() {
             // Empty file
-            let records: Vec<HashMap<String, Value>> = Vec::new();
+            let records: Vec<IndexMap<String, Value>> = Vec::new();
             let json_output = if config.pretty {
                 serde_json::to_string_pretty(&records)?
             } else {
@@ -124,7 +124,7 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
         // Process all records
         let mut json_records = Vec::new();
         for record in all_records {
-            let mut map = HashMap::new();
+            let mut map = IndexMap::new();
             for (i, field) in record.iter().enumerate() {
                 if let Some(header) = generated_headers.get(i) {
                     let value: Value = if field.parse::<f64>().is_ok() {
@@ -167,7 +167,7 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
 
     for result in reader.records() {
         let record = result?;
-        let mut map = HashMap::new();
+        let mut map = IndexMap::new();
 
         for (i, field) in record.iter().enumerate() {
             if let Some(header) = headers.get(i) {
