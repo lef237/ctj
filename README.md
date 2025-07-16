@@ -151,7 +151,7 @@ Given a CSV file `sample-no-header.csv` without headers:
 ```csv
 ,,
 ,,FALSE
-,555,
+,55.5,
 ```
 
 Output:
@@ -170,7 +170,7 @@ Output:
   },
   {
     "column_0": "",
-    "column_1": 555,
+    "column_1": 55.5,
     "column_2": ""
   }
 ]
