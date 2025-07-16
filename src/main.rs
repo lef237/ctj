@@ -17,7 +17,7 @@ struct Config {
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = Command::new("ctj")
         .about("Convert CSV to JSON")
-        .version("0.1.0")
+        .version("0.1.2")
         .arg(
             Arg::new("input")
                 .short('i')
