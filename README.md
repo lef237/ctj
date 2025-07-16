@@ -104,7 +104,7 @@ ctj sample.csv
 Output:
 
 ```json
-[{"name":"John","age":25.0,"city":"Tokyo","active":true},{"name":"Alice","age":30.0,"city":"Osaka","active":false},{"name":"Bob","age":35.0,"city":"Kyoto","active":true}]
+[{"name":"John","age":25,"city":"Tokyo","active":true},{"name":"Alice","age":30,"city":"Osaka","active":false},{"name":"Bob","age":35,"city":"Kyoto","active":true}]
 ```
 
 ### Example 2: Pretty printed output
@@ -119,19 +119,19 @@ Output:
 [
   {
     "name": "John",
-    "age": 25.0,
+    "age": 25,
     "city": "Tokyo",
     "active": true
   },
   {
     "name": "Alice",
-    "age": 30.0,
+    "age": 30,
     "city": "Osaka",
     "active": false
   },
   {
     "name": "Bob",
-    "age": 35.0,
+    "age": 35,
     "city": "Kyoto",
     "active": true
   }
@@ -170,7 +170,7 @@ Output:
   },
   {
     "column_0": "",
-    "column_1": 555.0,
+    "column_1": 555,
     "column_2": ""
   }
 ]
@@ -180,7 +180,8 @@ Output:
 
 The tool automatically detects and converts data types:
 
-- **Numbers**: Detected as floating-point numbers
+- **Integers**: Whole numbers (e.g., `25`, `100`) are detected as integers
+- **Floating-point numbers**: Numbers with decimal points (e.g., `95.5`, `87.2`) are detected as floats
 - **Booleans**: `true`, `false`, `TRUE`, `FALSE`, `True`, `False` are converted to JSON booleans (case-insensitive)
 - **Strings**: All other values are treated as strings
 

@@ -1,0 +1,4 @@
+name,age,score,active
+John,25,95.5,TRUE
+Jane,30,100,False
+Bob,35,87.2,true

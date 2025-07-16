@@ -100,7 +100,7 @@ fn test_cli_unicode_csv() {
 
     assert_eq!(parsed.len(), 2);
     assert_eq!(parsed[0]["名前"], "田中");
-    assert_eq!(parsed[0]["年齢"], 30.0);
+    assert_eq!(parsed[0]["年齢"], 30);
     assert_eq!(parsed[0]["都市"], "東京");
 }
 
@@ -182,13 +182,13 @@ fn test_cli_mixed_data_types() {
 
     assert_eq!(parsed.len(), 3);
     assert_eq!(parsed[0]["name"], "John");
-    assert_eq!(parsed[0]["age"], 30.0);
+    assert_eq!(parsed[0]["age"], 30);
     assert_eq!(parsed[0]["active"], true);
     assert_eq!(parsed[0]["score"], 95.5);
     assert_eq!(parsed[0]["notes"], "Good student");
 
     assert_eq!(parsed[1]["name"], "Jane");
-    assert_eq!(parsed[1]["age"], 25.0);
+    assert_eq!(parsed[1]["age"], 25);
     assert_eq!(parsed[1]["active"], false);
     assert_eq!(parsed[1]["score"], 88.0);
     assert_eq!(parsed[1]["notes"], "");
@@ -198,4 +198,68 @@ fn test_cli_mixed_data_types() {
     assert_eq!(parsed[2]["active"], true);
     assert_eq!(parsed[2]["score"], 92.3);
     assert_eq!(parsed[2]["notes"], "Excellent");
+}
+
+#[test]
+fn test_cli_integer_vs_float_detection() {
+    let temp_input = NamedTempFile::new().unwrap();
+    let temp_output = NamedTempFile::new().unwrap();
+
+    let csv_content = "name,age,score,active\nJohn,25,95.5,TRUE\nJane,30,100,False";
+    fs::write(temp_input.path(), csv_content).unwrap();
+
+    let output = Command::new("cargo")
+        .args(&["run", "--", "-i"])
+        .arg(temp_input.path())
+        .arg("-o")
+        .arg(temp_output.path())
+        .output()
+        .expect("Failed to execute command");
+
+    assert!(output.status.success());
+
+    let output_content = fs::read_to_string(temp_output.path()).unwrap();
+    let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+
+    assert_eq!(parsed.len(), 2);
+
+    // First record - verify integer vs float detection
+    assert_eq!(parsed[0]["name"], "John");
+    assert_eq!(parsed[0]["age"], 25); // Should be integer
+    assert_eq!(parsed[0]["score"], 95.5); // Should be float
+    assert_eq!(parsed[0]["active"], true); // Should be boolean (case-insensitive)
+
+    // Second record
+    assert_eq!(parsed[1]["name"], "Jane");
+    assert_eq!(parsed[1]["age"], 30); // Should be integer
+    assert_eq!(parsed[1]["score"], 100); // Should be integer (not 100.0)
+    assert_eq!(parsed[1]["active"], false); // Should be boolean (case-insensitive)
+}
+
+#[test]
+fn test_cli_case_insensitive_booleans() {
+    let temp_input = NamedTempFile::new().unwrap();
+    let temp_output = NamedTempFile::new().unwrap();
+
+    let csv_content = "test,value\ncase1,true\ncase2,FALSE\ncase3,True\ncase4,false";
+    fs::write(temp_input.path(), csv_content).unwrap();
+
+    let output = Command::new("cargo")
+        .args(&["run", "--", "-i"])
+        .arg(temp_input.path())
+        .arg("-o")
+        .arg(temp_output.path())
+        .output()
+        .expect("Failed to execute command");
+
+    assert!(output.status.success());
+
+    let output_content = fs::read_to_string(temp_output.path()).unwrap();
+    let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+
+    assert_eq!(parsed.len(), 4);
+    assert_eq!(parsed[0]["value"], true);
+    assert_eq!(parsed[1]["value"], false);
+    assert_eq!(parsed[2]["value"], true);
+    assert_eq!(parsed[3]["value"], false);
 }

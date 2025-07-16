@@ -79,6 +79,16 @@ fn parse_boolean(s: &str) -> Option<bool> {
     }
 }
 
+fn parse_number(s: &str) -> Value {
+    if let Ok(int_val) = s.parse::<i64>() {
+        serde_json::Value::Number(serde_json::Number::from(int_val))
+    } else if let Ok(float_val) = s.parse::<f64>() {
+        serde_json::Value::Number(serde_json::Number::from_f64(float_val).unwrap())
+    } else {
+        serde_json::Value::String(s.to_string())
+    }
+}
+
 fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
     let file = File::open(&config.input)?;
     let mut reader = if config.no_header {
@@ -135,14 +145,10 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
             let mut map = IndexMap::new();
             for (i, field) in record.iter().enumerate() {
                 if let Some(header) = generated_headers.get(i) {
-                    let value: Value = if field.parse::<f64>().is_ok() {
-                        serde_json::Value::Number(
-                            serde_json::Number::from_f64(field.parse().unwrap()).unwrap(),
-                        )
-                    } else if let Some(bool_val) = parse_boolean(field) {
+                    let value: Value = if let Some(bool_val) = parse_boolean(field) {
                         serde_json::Value::Bool(bool_val)
                     } else {
-                        serde_json::Value::String(field.to_string())
+                        parse_number(field)
                     };
                     map.insert(header.to_string(), value);
                 }
@@ -179,14 +185,10 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
 
         for (i, field) in record.iter().enumerate() {
             if let Some(header) = headers.get(i) {
-                let value: Value = if field.parse::<f64>().is_ok() {
-                    serde_json::Value::Number(
-                        serde_json::Number::from_f64(field.parse().unwrap()).unwrap(),
-                    )
-                } else if let Some(bool_val) = parse_boolean(field) {
+                let value: Value = if let Some(bool_val) = parse_boolean(field) {
                     serde_json::Value::Bool(bool_val)
                 } else {
-                    serde_json::Value::String(field.to_string())
+                    parse_number(field)
                 };
                 map.insert(header.to_string(), value);
             }
@@ -461,5 +463,67 @@ mod tests {
         let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
 
         assert_eq!(parsed.len(), 0);
+    }
+
+    #[test]
+    fn test_integer_vs_float_detection() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+
+        let csv_content = "name,age,score,active\nJohn,25,95.5,TRUE\nJane,30,100,False";
+        fs::write(temp_input.path(), csv_content).unwrap();
+
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+            no_header: false,
+        };
+
+        convert_csv_to_json(&config).unwrap();
+
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+
+        assert_eq!(parsed.len(), 2);
+
+        // First record
+        assert_eq!(parsed[0]["name"], "John");
+        assert_eq!(parsed[0]["age"], 25); // Integer
+        assert_eq!(parsed[0]["score"], 95.5); // Float
+        assert_eq!(parsed[0]["active"], true); // Boolean
+
+        // Second record
+        assert_eq!(parsed[1]["name"], "Jane");
+        assert_eq!(parsed[1]["age"], 30); // Integer
+        assert_eq!(parsed[1]["score"], 100); // Integer (not 100.0)
+        assert_eq!(parsed[1]["active"], false); // Boolean
+    }
+
+    #[test]
+    fn test_case_insensitive_booleans() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+
+        let csv_content = "test,value\ncase1,true\ncase2,FALSE\ncase3,True\ncase4,false";
+        fs::write(temp_input.path(), csv_content).unwrap();
+
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+            no_header: false,
+        };
+
+        convert_csv_to_json(&config).unwrap();
+
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+
+        assert_eq!(parsed.len(), 4);
+        assert_eq!(parsed[0]["value"], true);
+        assert_eq!(parsed[1]["value"], false);
+        assert_eq!(parsed[2]["value"], true);
+        assert_eq!(parsed[3]["value"], false);
     }
 }

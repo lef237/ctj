@@ -25,7 +25,7 @@ fn test_cli_basic_conversion() {
 
     assert_eq!(parsed.len(), 2);
     assert_eq!(parsed[0]["name"], "John");
-    assert_eq!(parsed[0]["age"], 30.0);
+    assert_eq!(parsed[0]["age"], 30);
     assert_eq!(parsed[0]["city"], "Tokyo");
 }
 
@@ -82,7 +82,7 @@ fn test_cli_positional_argument() {
     assert_eq!(parsed[0]["name"], "Alice");
     assert_eq!(parsed[0]["score"], 95.5);
     assert_eq!(parsed[1]["name"], "Bob");
-    assert_eq!(parsed[1]["score"], 80.0);
+    assert_eq!(parsed[1]["score"], 80);
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn test_cli_stdout_output() {
 
     assert_eq!(parsed.len(), 1);
     assert_eq!(parsed[0]["name"], "John");
-    assert_eq!(parsed[0]["age"], 30.0);
+    assert_eq!(parsed[0]["age"], 30);
 }
 
 #[test]
