@@ -1,0 +1,1 @@
+[{"name":"John","active":true,"city":"Tokyo","age":25.0},{"active":false,"name":"Alice","city":"Osaka","age":30.0},{"city":"Kyoto","age":35.0,"name":"Bob","active":true}]

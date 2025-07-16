@@ -1,0 +1,4 @@
+name,age,city,active
+John,25,Tokyo,true
+Alice,30,Osaka,false
+Bob,35,Kyoto,true
