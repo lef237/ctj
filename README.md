@@ -80,6 +80,7 @@ ctj input.csv -o output.json
 - `-i, --input <FILE>`: Input CSV file (optional, can also be provided as positional argument)
 - `-o, --output <FILE>`: Output JSON file (optional, defaults to stdout)
 - `-p, --pretty`: Pretty print JSON output
+- `--no-header`: Treat the first row as data, not headers (generates column_0, column_1, etc.)
 - `-h, --help`: Show help message
 - `-V, --version`: Show version information
 
@@ -101,6 +102,7 @@ ctj sample.csv
 ```
 
 Output:
+
 ```json
 [{"name":"John","active":true,"city":"Tokyo","age":25.0},{"active":false,"name":"Alice","city":"Osaka","age":30.0},{"city":"Kyoto","age":35.0,"name":"Bob","active":true}]
 ```
@@ -112,6 +114,7 @@ ctj sample.csv -p
 ```
 
 Output:
+
 ```json
 [
   {
@@ -131,6 +134,44 @@ Output:
     "active": true,
     "name": "Bob",
     "city": "Kyoto"
+  }
+]
+```
+
+### Example 3: CSV without headers
+
+For CSV files without header rows:
+
+```bash
+ctj data.csv --no-header -p
+```
+
+Given a CSV file `data.csv` without headers:
+
+```csv
+,,
+,,FALSE
+,555,
+```
+
+Output:
+
+```json
+[
+  {
+    "column_0": "",
+    "column_1": "",
+    "column_2": ""
+  },
+  {
+    "column_0": "",
+    "column_1": "",
+    "column_2": "FALSE"
+  },
+  {
+    "column_0": "",
+    "column_1": 555.0,
+    "column_2": ""
   }
 ]
 ```

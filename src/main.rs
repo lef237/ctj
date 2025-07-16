@@ -12,6 +12,7 @@ struct Config {
     input: String,
     output: Option<String>,
     pretty: bool,
+    no_header: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -45,6 +46,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .help("Pretty print JSON output")
                 .action(clap::ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("no_header")
+                .long("no-header")
+                .help("Treat the first row as data, not headers")
+                .action(clap::ArgAction::SetTrue),
+        )
         .get_matches();
 
     let input_file = matches
@@ -56,6 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         input: input_file.clone(),
         output: matches.get_one::<String>("output").cloned(),
         pretty: matches.get_flag("pretty"),
+        no_header: matches.get_flag("no_header"),
     };
 
     convert_csv_to_json(&config)?;
@@ -65,9 +73,96 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
     let file = File::open(&config.input)?;
-    let mut reader = Reader::from_reader(BufReader::new(file));
+    let mut reader = if config.no_header {
+        csv::ReaderBuilder::new()
+            .has_headers(false)
+            .from_reader(BufReader::new(file))
+    } else {
+        Reader::from_reader(BufReader::new(file))
+    };
 
-    let headers = reader.headers()?.clone();
+    let headers = if config.no_header {
+        // Generate column names: column_0, column_1, column_2, ...
+        let mut all_records = Vec::new();
+        let mut max_columns = 0;
+
+        // First pass: collect all records and find max columns
+        for result in reader.records() {
+            let record = result?;
+            max_columns = max_columns.max(record.len());
+            all_records.push(record);
+        }
+
+        if all_records.is_empty() {
+            // Empty file
+            let records: Vec<HashMap<String, Value>> = Vec::new();
+            let json_output = if config.pretty {
+                serde_json::to_string_pretty(&records)?
+            } else {
+                serde_json::to_string(&records)?
+            };
+
+            match &config.output {
+                Some(output_file) => {
+                    std::fs::write(output_file, json_output)?;
+                    println!("JSON output written to: {}", output_file);
+                }
+                None => {
+                    println!("{}", json_output);
+                }
+            }
+
+            return Ok(());
+        }
+
+        // Generate headers
+        let mut generated_headers = Vec::new();
+        for i in 0..max_columns {
+            generated_headers.push(format!("column_{}", i));
+        }
+
+        // Process all records
+        let mut json_records = Vec::new();
+        for record in all_records {
+            let mut map = HashMap::new();
+            for (i, field) in record.iter().enumerate() {
+                if let Some(header) = generated_headers.get(i) {
+                    let value: Value = if field.parse::<f64>().is_ok() {
+                        serde_json::Value::Number(
+                            serde_json::Number::from_f64(field.parse().unwrap()).unwrap(),
+                        )
+                    } else if field.parse::<bool>().is_ok() {
+                        serde_json::Value::Bool(field.parse().unwrap())
+                    } else {
+                        serde_json::Value::String(field.to_string())
+                    };
+                    map.insert(header.to_string(), value);
+                }
+            }
+            json_records.push(map);
+        }
+
+        let json_output = if config.pretty {
+            serde_json::to_string_pretty(&json_records)?
+        } else {
+            serde_json::to_string(&json_records)?
+        };
+
+        match &config.output {
+            Some(output_file) => {
+                std::fs::write(output_file, json_output)?;
+                println!("JSON output written to: {}", output_file);
+            }
+            None => {
+                println!("{}", json_output);
+            }
+        }
+
+        return Ok(());
+    } else {
+        reader.headers()?.clone()
+    };
+
     let mut records = Vec::new();
 
     for result in reader.records() {
@@ -129,6 +224,7 @@ mod tests {
             input: temp_input.path().to_string_lossy().to_string(),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
+            no_header: false,
         };
 
         convert_csv_to_json(&config).unwrap();
@@ -157,6 +253,7 @@ mod tests {
             input: temp_input.path().to_string_lossy().to_string(),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: true,
+            no_header: false,
         };
 
         convert_csv_to_json(&config).unwrap();
@@ -182,6 +279,7 @@ mod tests {
             input: temp_input.path().to_string_lossy().to_string(),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
+            no_header: false,
         };
 
         convert_csv_to_json(&config).unwrap();
@@ -209,6 +307,7 @@ mod tests {
             input: temp_input.path().to_string_lossy().to_string(),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
+            no_header: false,
         };
 
         convert_csv_to_json(&config).unwrap();
@@ -230,6 +329,7 @@ mod tests {
             input: "non_existent_file.csv".to_string(),
             output: None,
             pretty: false,
+            no_header: false,
         };
 
         let result = convert_csv_to_json(&config);
@@ -248,6 +348,7 @@ mod tests {
             input: temp_input.path().to_string_lossy().to_string(),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
+            no_header: false,
         };
 
         let result = convert_csv_to_json(&config);
@@ -266,6 +367,7 @@ mod tests {
             input: temp_input.path().to_string_lossy().to_string(),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
+            no_header: false,
         };
 
         convert_csv_to_json(&config).unwrap();
@@ -290,6 +392,59 @@ mod tests {
             input: temp_input.path().to_string_lossy().to_string(),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
+            no_header: false,
+        };
+
+        convert_csv_to_json(&config).unwrap();
+
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+
+        assert_eq!(parsed.len(), 0);
+    }
+
+    #[test]
+    fn test_convert_csv_no_header() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+
+        let csv_content = "John,30,Tokyo\nJane,25,Osaka";
+        fs::write(temp_input.path(), csv_content).unwrap();
+
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+            no_header: true,
+        };
+
+        convert_csv_to_json(&config).unwrap();
+
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+
+        assert_eq!(parsed.len(), 2);
+        assert_eq!(parsed[0]["column_0"], "John");
+        assert_eq!(parsed[0]["column_1"], 30.0);
+        assert_eq!(parsed[0]["column_2"], "Tokyo");
+        assert_eq!(parsed[1]["column_0"], "Jane");
+        assert_eq!(parsed[1]["column_1"], 25.0);
+        assert_eq!(parsed[1]["column_2"], "Osaka");
+    }
+
+    #[test]
+    fn test_convert_csv_no_header_empty_file() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+
+        let csv_content = "";
+        fs::write(temp_input.path(), csv_content).unwrap();
+
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+            no_header: true,
         };
 
         convert_csv_to_json(&config).unwrap();
