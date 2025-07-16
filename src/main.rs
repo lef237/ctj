@@ -23,8 +23,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .short('i')
                 .long("input")
                 .value_name("FILE")
+                .help("Input CSV file"),
+        )
+        .arg(
+            Arg::new("file")
+                .value_name("FILE")
                 .help("Input CSV file")
-                .required(true),
+                .index(1),
         )
         .arg(
             Arg::new("output")
@@ -42,8 +47,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .get_matches();
 
+    let input_file = matches.get_one::<String>("input")
+        .or_else(|| matches.get_one::<String>("file"))
+        .ok_or("Input file is required")?;
+
     let config = Config {
-        input: matches.get_one::<String>("input").unwrap().clone(),
+        input: input_file.clone(),
         output: matches.get_one::<String>("output").cloned(),
         pretty: matches.get_flag("pretty"),
     };

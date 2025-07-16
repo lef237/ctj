@@ -35,6 +35,12 @@ This creates an executable at `./target/release/ctj`.
 Convert CSV to JSON and output to stdout:
 
 ```bash
+ctj input.csv
+```
+
+Or using the explicit flag:
+
+```bash
 ctj -i input.csv
 ```
 
@@ -43,7 +49,7 @@ ctj -i input.csv
 Format JSON output with indentation:
 
 ```bash
-ctj -i input.csv -p
+ctj input.csv -p
 ```
 
 ### Output to File
@@ -51,12 +57,12 @@ ctj -i input.csv -p
 Save JSON output to a file:
 
 ```bash
-ctj -i input.csv -o output.json
+ctj input.csv -o output.json
 ```
 
 ### Command Line Options
 
-- `-i, --input <FILE>`: Input CSV file (required)
+- `-i, --input <FILE>`: Input CSV file (optional, can also be provided as positional argument)
 - `-o, --output <FILE>`: Output JSON file (optional, defaults to stdout)
 - `-p, --pretty`: Pretty print JSON output
 - `-h, --help`: Show help message
@@ -76,7 +82,7 @@ Bob,35,Kyoto,true
 ### Example 1: Basic conversion
 
 ```bash
-ctj -i sample.csv
+ctj sample.csv
 ```
 
 Output:
@@ -87,7 +93,7 @@ Output:
 ### Example 2: Pretty printed output
 
 ```bash
-ctj -i sample.csv -p
+ctj sample.csv -p
 ```
 
 Output:
