@@ -2,6 +2,13 @@
 name = "ctj"
 version = "0.1.0"
 edition = "2021"
+authors = ["lef237 <lef237k5@gmail.com>"]
+description = "A command-line tool to convert CSV files to JSON format with automatic type detection"
+readme = "README.md"
+repository = "https://github.com/lef237/ctj"
+license = "MIT"
+keywords = ["csv", "json", "cli", "converter", "command-line"]
+categories = ["command-line-utilities", "text-processing"]
 
 [dependencies]
 csv = "1.3"
