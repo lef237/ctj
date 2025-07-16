@@ -104,7 +104,7 @@ ctj sample.csv
 Output:
 
 ```json
-[{"name":"John","active":true,"city":"Tokyo","age":25.0},{"active":false,"name":"Alice","city":"Osaka","age":30.0},{"city":"Kyoto","age":35.0,"name":"Bob","active":true}]
+[{"name":"John","age":25.0,"city":"Tokyo","active":true},{"name":"Alice","age":30.0,"city":"Osaka","active":false},{"name":"Bob","age":35.0,"city":"Kyoto","active":true}]
 ```
 
 ### Example 2: Pretty printed output
@@ -118,22 +118,22 @@ Output:
 ```json
 [
   {
-    "city": "Tokyo",
+    "name": "John",
     "age": 25.0,
-    "active": true,
-    "name": "John"
+    "city": "Tokyo",
+    "active": true
   },
   {
-    "active": false,
-    "age": 30.0,
     "name": "Alice",
-    "city": "Osaka"
+    "age": 30.0,
+    "city": "Osaka",
+    "active": false
   },
   {
-    "age": 35.0,
-    "active": true,
     "name": "Bob",
-    "city": "Kyoto"
+    "age": 35.0,
+    "city": "Kyoto",
+    "active": true
   }
 ]
 ```

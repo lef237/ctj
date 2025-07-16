@@ -1,6 +1,6 @@
 [package]
 name = "ctj"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["lef237 <lef237k5@gmail.com>"]
 description = "A command-line tool to convert CSV to JSON written in Rust"
