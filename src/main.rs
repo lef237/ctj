@@ -5,7 +5,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
-use std::io::{self, BufReader};
+use std::io::BufReader;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Config {
@@ -106,4 +106,194 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
     }
     
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_convert_csv_to_json_basic() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+        
+        let csv_content = "name,age,city\nJohn,30,Tokyo\nJane,25,Osaka";
+        fs::write(temp_input.path(), csv_content).unwrap();
+        
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+        };
+        
+        convert_csv_to_json(&config).unwrap();
+        
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+        
+        assert_eq!(parsed.len(), 2);
+        assert_eq!(parsed[0]["name"], "John");
+        assert_eq!(parsed[0]["age"], 30.0);
+        assert_eq!(parsed[0]["city"], "Tokyo");
+        assert_eq!(parsed[1]["name"], "Jane");
+        assert_eq!(parsed[1]["age"], 25.0);
+        assert_eq!(parsed[1]["city"], "Osaka");
+    }
+
+    #[test]
+    fn test_convert_csv_to_json_pretty() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+        
+        let csv_content = "name,active\nTest,true";
+        fs::write(temp_input.path(), csv_content).unwrap();
+        
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: true,
+        };
+        
+        convert_csv_to_json(&config).unwrap();
+        
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        assert!(output_content.contains("  "));
+        assert!(output_content.contains("\n"));
+        
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+        assert_eq!(parsed[0]["name"], "Test");
+        assert_eq!(parsed[0]["active"], true);
+    }
+
+    #[test]
+    fn test_convert_csv_with_numbers_and_booleans() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+        
+        let csv_content = "name,score,passed\nAlice,95.5,true\nBob,80,false";
+        fs::write(temp_input.path(), csv_content).unwrap();
+        
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+        };
+        
+        convert_csv_to_json(&config).unwrap();
+        
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+        
+        assert_eq!(parsed[0]["name"], "Alice");
+        assert_eq!(parsed[0]["score"], 95.5);
+        assert_eq!(parsed[0]["passed"], true);
+        assert_eq!(parsed[1]["name"], "Bob");
+        assert_eq!(parsed[1]["score"], 80.0);
+        assert_eq!(parsed[1]["passed"], false);
+    }
+
+    #[test]
+    fn test_convert_csv_empty_fields() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+        
+        let csv_content = "name,age,city\nJohn,,\n,25,Osaka";
+        fs::write(temp_input.path(), csv_content).unwrap();
+        
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+        };
+        
+        convert_csv_to_json(&config).unwrap();
+        
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+        
+        assert_eq!(parsed[0]["name"], "John");
+        assert_eq!(parsed[0]["age"], "");
+        assert_eq!(parsed[0]["city"], "");
+        assert_eq!(parsed[1]["name"], "");
+        assert_eq!(parsed[1]["age"], 25.0);
+        assert_eq!(parsed[1]["city"], "Osaka");
+    }
+
+    #[test]
+    fn test_convert_csv_file_not_found() {
+        let config = Config {
+            input: "non_existent_file.csv".to_string(),
+            output: None,
+            pretty: false,
+        };
+        
+        let result = convert_csv_to_json(&config);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_convert_csv_invalid_format() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+        
+        let csv_content = "name,age\nJohn,30\nJane";
+        fs::write(temp_input.path(), csv_content).unwrap();
+        
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+        };
+        
+        let result = convert_csv_to_json(&config);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_convert_csv_single_column() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+        
+        let csv_content = "name\nJohn\nJane";
+        fs::write(temp_input.path(), csv_content).unwrap();
+        
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+        };
+        
+        convert_csv_to_json(&config).unwrap();
+        
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+        
+        assert_eq!(parsed.len(), 2);
+        assert_eq!(parsed[0]["name"], "John");
+        assert_eq!(parsed[1]["name"], "Jane");
+    }
+
+    #[test]
+    fn test_convert_csv_no_data_rows() {
+        let temp_input = NamedTempFile::new().unwrap();
+        let temp_output = NamedTempFile::new().unwrap();
+        
+        let csv_content = "name,age,city";
+        fs::write(temp_input.path(), csv_content).unwrap();
+        
+        let config = Config {
+            input: temp_input.path().to_string_lossy().to_string(),
+            output: Some(temp_output.path().to_string_lossy().to_string()),
+            pretty: false,
+        };
+        
+        convert_csv_to_json(&config).unwrap();
+        
+        let output_content = fs::read_to_string(temp_output.path()).unwrap();
+        let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+        
+        assert_eq!(parsed.len(), 0);
+    }
 }
