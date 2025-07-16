@@ -12,11 +12,21 @@ A command-line tool to convert CSV files to JSON format.
 
 ## Installation
 
-Build from source:
+### Option 1: Install globally (recommended)
+
+```bash
+cargo install --path .
+```
+
+After installation, you can use `ctj` command directly from anywhere.
+
+### Option 2: Build from source
 
 ```bash
 cargo build --release
 ```
+
+This creates an executable at `./target/release/ctj`.
 
 ## Usage
 
@@ -25,7 +35,7 @@ cargo build --release
 Convert CSV to JSON and output to stdout:
 
 ```bash
-./target/release/ctj -i input.csv
+ctj -i input.csv
 ```
 
 ### Pretty Print
@@ -33,7 +43,7 @@ Convert CSV to JSON and output to stdout:
 Format JSON output with indentation:
 
 ```bash
-./target/release/ctj -i input.csv -p
+ctj -i input.csv -p
 ```
 
 ### Output to File
@@ -41,7 +51,7 @@ Format JSON output with indentation:
 Save JSON output to a file:
 
 ```bash
-./target/release/ctj -i input.csv -o output.json
+ctj -i input.csv -o output.json
 ```
 
 ### Command Line Options
@@ -66,7 +76,7 @@ Bob,35,Kyoto,true
 ### Example 1: Basic conversion
 
 ```bash
-./target/release/ctj -i sample.csv
+ctj -i sample.csv
 ```
 
 Output:
@@ -77,7 +87,7 @@ Output:
 ### Example 2: Pretty printed output
 
 ```bash
-./target/release/ctj -i sample.csv -p
+ctj -i sample.csv -p
 ```
 
 Output:
