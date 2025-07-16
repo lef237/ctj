@@ -71,6 +71,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn parse_boolean(s: &str) -> Option<bool> {
+    match s.to_lowercase().as_str() {
+        "true" => Some(true),
+        "false" => Some(false),
+        _ => None,
+    }
+}
+
 fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
     let file = File::open(&config.input)?;
     let mut reader = if config.no_header {
@@ -131,8 +139,8 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
                         serde_json::Value::Number(
                             serde_json::Number::from_f64(field.parse().unwrap()).unwrap(),
                         )
-                    } else if field.parse::<bool>().is_ok() {
-                        serde_json::Value::Bool(field.parse().unwrap())
+                    } else if let Some(bool_val) = parse_boolean(field) {
+                        serde_json::Value::Bool(bool_val)
                     } else {
                         serde_json::Value::String(field.to_string())
                     };
@@ -175,8 +183,8 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
                     serde_json::Value::Number(
                         serde_json::Number::from_f64(field.parse().unwrap()).unwrap(),
                     )
-                } else if field.parse::<bool>().is_ok() {
-                    serde_json::Value::Bool(field.parse().unwrap())
+                } else if let Some(bool_val) = parse_boolean(field) {
+                    serde_json::Value::Bool(bool_val)
                 } else {
                     serde_json::Value::String(field.to_string())
                 };

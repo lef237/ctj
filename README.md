@@ -143,10 +143,10 @@ Output:
 For CSV files without header rows:
 
 ```bash
-ctj data.csv --no-header -p
+ctj sample-no-header.csv --no-header -p
 ```
 
-Given a CSV file `data.csv` without headers:
+Given a CSV file `sample-no-header.csv` without headers:
 
 ```csv
 ,,
@@ -166,7 +166,7 @@ Output:
   {
     "column_0": "",
     "column_1": "",
-    "column_2": "FALSE"
+    "column_2": false
   },
   {
     "column_0": "",
@@ -181,7 +181,7 @@ Output:
 The tool automatically detects and converts data types:
 
 - **Numbers**: Detected as floating-point numbers
-- **Booleans**: `true` and `false` are converted to JSON booleans
+- **Booleans**: `true`, `false`, `TRUE`, `FALSE`, `True`, `False` are converted to JSON booleans (case-insensitive)
 - **Strings**: All other values are treated as strings
 
 ## License
