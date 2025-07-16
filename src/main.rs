@@ -1,8 +1,8 @@
 use clap::{Arg, Command};
 use csv::Reader;
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use indexmap::IndexMap;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
