@@ -2,6 +2,9 @@
 
 A command-line tool to convert CSV files to JSON format.
 
+[![Crates.io](https://img.shields.io/crates/v/ctj.svg)](https://crates.io/crates/ctj)
+[![GitHub](https://img.shields.io/badge/github-lef237/ctj-blue.svg)](https://github.com/lef237/ctj)
+
 ## Features
 
 - Convert CSV files to JSON with automatic type detection
@@ -12,17 +15,29 @@ A command-line tool to convert CSV files to JSON format.
 
 ## Installation
 
-### Option 1: Install globally (recommended)
+### Option 1: Install from crates.io (recommended)
 
 ```bash
+cargo install ctj
+```
+
+This will install the latest version from [crates.io](https://crates.io/crates/ctj). After installation, you can use `ctj` command directly from anywhere.
+
+### Option 2: Install from source
+
+Clone the repository and install locally:
+
+```bash
+git clone https://github.com/lef237/ctj.git
+cd ctj
 cargo install --path .
 ```
 
-After installation, you can use `ctj` command directly from anywhere.
-
-### Option 2: Build from source
+### Option 3: Build from source
 
 ```bash
+git clone https://github.com/lef237/ctj.git
+cd ctj
 cargo build --release
 ```
 
