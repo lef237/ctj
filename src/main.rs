@@ -106,8 +106,7 @@ fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
             }
         }
         None => {
-            let stdin = io::stdin();
-            let boxed_reader: Box<dyn Read> = Box::new(stdin.lock());
+            let boxed_reader: Box<dyn Read> = Box::new(BufReader::new(io::stdin()));
             if config.no_header {
                 csv::ReaderBuilder::new()
                     .has_headers(false)
