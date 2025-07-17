@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::error::Error;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{self, BufReader, Read};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Config {
-    input: String,
+    input: Option<String>,
     output: Option<String>,
     pretty: bool,
     no_header: bool,
@@ -17,19 +17,19 @@ struct Config {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = Command::new("ctj")
-        .about("Convert CSV to JSON")
+        .about("Convert CSV to JSON from files or piped input")
         .version(env!("CARGO_PKG_VERSION"))
         .arg(
             Arg::new("input")
                 .short('i')
                 .long("input")
                 .value_name("FILE")
-                .help("Input CSV file"),
+                .help("Input CSV file (reads from stdin if not provided)"),
         )
         .arg(
             Arg::new("file")
                 .value_name("FILE")
-                .help("Input CSV file")
+                .help("Input CSV file (reads from stdin if not provided)")
                 .index(1),
         )
         .arg(
@@ -48,6 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .arg(
             Arg::new("no_header")
+                .short('n')
                 .long("no-header")
                 .help("Treat the first row as data, not headers")
                 .action(clap::ArgAction::SetTrue),
@@ -56,11 +57,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let input_file = matches
         .get_one::<String>("input")
-        .or_else(|| matches.get_one::<String>("file"))
-        .ok_or("Input file is required")?;
+        .or_else(|| matches.get_one::<String>("file"));
+
+    // If no input file specified, we'll read from stdin
+    // The error will be handled in convert_csv_to_json if stdin is empty/closed
 
     let config = Config {
-        input: input_file.clone(),
+        input: input_file.cloned(),
         output: matches.get_one::<String>("output").cloned(),
         pretty: matches.get_flag("pretty"),
         no_header: matches.get_flag("no_header"),
@@ -90,13 +93,28 @@ fn parse_number(s: &str) -> Value {
 }
 
 fn convert_csv_to_json(config: &Config) -> Result<(), Box<dyn Error>> {
-    let file = File::open(&config.input)?;
-    let mut reader = if config.no_header {
-        csv::ReaderBuilder::new()
-            .has_headers(false)
-            .from_reader(BufReader::new(file))
-    } else {
-        Reader::from_reader(BufReader::new(file))
+    let mut reader: Reader<Box<dyn Read>> = match &config.input {
+        Some(file_path) => {
+            let file = File::open(file_path)?;
+            let boxed_reader: Box<dyn Read> = Box::new(BufReader::new(file));
+            if config.no_header {
+                csv::ReaderBuilder::new()
+                    .has_headers(false)
+                    .from_reader(boxed_reader)
+            } else {
+                Reader::from_reader(boxed_reader)
+            }
+        }
+        None => {
+            let boxed_reader: Box<dyn Read> = Box::new(BufReader::new(io::stdin()));
+            if config.no_header {
+                csv::ReaderBuilder::new()
+                    .has_headers(false)
+                    .from_reader(boxed_reader)
+            } else {
+                Reader::from_reader(boxed_reader)
+            }
+        }
     };
 
     let headers = if config.no_header {
@@ -231,7 +249,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: false,
@@ -260,7 +278,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: true,
             no_header: false,
@@ -286,7 +304,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: false,
@@ -314,7 +332,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: false,
@@ -336,7 +354,7 @@ mod tests {
     #[test]
     fn test_convert_csv_file_not_found() {
         let config = Config {
-            input: "non_existent_file.csv".to_string(),
+            input: Some("non_existent_file.csv".to_string()),
             output: None,
             pretty: false,
             no_header: false,
@@ -355,7 +373,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: false,
@@ -374,7 +392,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: false,
@@ -399,7 +417,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: false,
@@ -422,7 +440,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: true,
@@ -451,7 +469,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: true,
@@ -474,7 +492,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: false,
@@ -509,7 +527,7 @@ mod tests {
         fs::write(temp_input.path(), csv_content).unwrap();
 
         let config = Config {
-            input: temp_input.path().to_string_lossy().to_string(),
+            input: Some(temp_input.path().to_string_lossy().to_string()),
             output: Some(temp_output.path().to_string_lossy().to_string()),
             pretty: false,
             no_header: false,
