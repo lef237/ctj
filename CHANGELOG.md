@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+There are no changes yet.
+
+## [0.1.8] - 2025-07-17
+
 ### Added
 - Support for piped stdin input - you can now pipe CSV data directly to ctj (e.g., `cat file.csv | ctj`)
 - Short option `-n` for `--no-header` flag to improve usability

@@ -189,21 +189,15 @@ Output:
 
 ### Example 4: Using piped input
 
+You can pipe CSV data directly into `ctj`:
+
 ```bash
+# Basic piped input
 cat sample.csv | ctj -p
-```
 
-Same output as Example 2.
-
-### Example 5: Processing data from a URL
-
-```bash
+# Processing data from a URL
 curl -s https://example.com/data.csv | ctj --pretty
-```
 
-### Example 6: Combining with other commands
-
-```bash
 # Process data and save to file
 echo "name,score\nAlice,95.5\nBob,87" | ctj > results.json
 
