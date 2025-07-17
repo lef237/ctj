@@ -1,6 +1,6 @@
 # ctj
 
-A command-line tool to convert CSV files to JSON format.
+A command-line tool to convert CSV files to JSON format, supporting both file input and piped stdin.
 
 [![Crates.io](https://img.shields.io/crates/v/ctj.svg)](https://crates.io/crates/ctj)
 [![GitHub](https://img.shields.io/badge/github-lef237/ctj-blue.svg)](https://github.com/lef237/ctj)
@@ -8,6 +8,7 @@ A command-line tool to convert CSV files to JSON format.
 ## Features
 
 - Convert CSV files to JSON with automatic type detection
+- Support for piped stdin input (e.g., `cat file.csv | ctj`)
 - Support for numbers, booleans, and strings
 - Pretty print JSON output
 - Output to file or stdout
@@ -59,6 +60,16 @@ Or using the explicit flag:
 ctj -i input.csv
 ```
 
+### Piped Input
+
+You can also pipe CSV data directly to ctj:
+
+```bash
+cat input.csv | ctj
+echo "name,age\nJohn,30" | ctj
+curl https://example.com/data.csv | ctj
+```
+
 ### Pretty Print
 
 Format JSON output with indentation:
@@ -77,7 +88,7 @@ ctj input.csv -o output.json
 
 ### Command Line Options
 
-- `-i, --input <FILE>`: Input CSV file (optional, can also be provided as positional argument)
+- `-i, --input <FILE>`: Input CSV file (optional, can also be provided as positional argument; if not provided, reads from stdin)
 - `-o, --output <FILE>`: Output JSON file (optional, defaults to stdout)
 - `-p, --pretty`: Pretty print JSON output
 - `-n, --no-header`: Treat the first row as data, not headers (generates column_0, column_1, etc.)
@@ -172,6 +183,47 @@ Output:
     "column_0": "",
     "column_1": 55.5,
     "column_2": ""
+  }
+]
+```
+
+### Example 4: Using piped input
+
+```bash
+cat sample.csv | ctj -p
+```
+
+Same output as Example 2.
+
+### Example 5: Processing data from a URL
+
+```bash
+curl -s https://example.com/data.csv | ctj --pretty
+```
+
+### Example 6: Combining with other commands
+
+```bash
+# Process data and save to file
+echo "name,score\nAlice,95.5\nBob,87" | ctj > results.json
+
+# Process without headers and pretty print
+echo "John,30,Tokyo\nJane,25,Osaka" | ctj --no-header --pretty
+```
+
+Output for the last command:
+
+```json
+[
+  {
+    "column_0": "John",
+    "column_1": 30,
+    "column_2": "Tokyo"
+  },
+  {
+    "column_0": "Jane",
+    "column_1": 25,
+    "column_2": "Osaka"
   }
 ]
 ```
