@@ -48,6 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .arg(
             Arg::new("no_header")
+                .short('n')
                 .long("no-header")
                 .help("Treat the first row as data, not headers")
                 .action(clap::ArgAction::SetTrue),

@@ -156,3 +156,33 @@ fn test_cli_version() {
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert!(stdout.contains(&format!("ctj {}", env!("CARGO_PKG_VERSION"))));
 }
+
+#[test]
+fn test_cli_no_header_shorthand() {
+    let temp_input = NamedTempFile::new().unwrap();
+    let temp_output = NamedTempFile::new().unwrap();
+
+    let csv_content = "John,30,Tokyo\nJane,25,Osaka";
+    fs::write(temp_input.path(), csv_content).unwrap();
+
+    let output = Command::new("cargo")
+        .args(&["run", "--", "-n"])
+        .arg(temp_input.path())
+        .arg("-o")
+        .arg(temp_output.path())
+        .output()
+        .expect("Failed to execute command");
+
+    assert!(output.status.success());
+
+    let output_content = fs::read_to_string(temp_output.path()).unwrap();
+    let parsed: Vec<serde_json::Value> = serde_json::from_str(&output_content).unwrap();
+
+    assert_eq!(parsed.len(), 2);
+    assert_eq!(parsed[0]["column_0"], "John");
+    assert_eq!(parsed[0]["column_1"], 30);
+    assert_eq!(parsed[0]["column_2"], "Tokyo");
+    assert_eq!(parsed[1]["column_0"], "Jane");
+    assert_eq!(parsed[1]["column_1"], 25);
+    assert_eq!(parsed[1]["column_2"], "Osaka");
+}

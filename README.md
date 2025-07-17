@@ -80,7 +80,7 @@ ctj input.csv -o output.json
 - `-i, --input <FILE>`: Input CSV file (optional, can also be provided as positional argument)
 - `-o, --output <FILE>`: Output JSON file (optional, defaults to stdout)
 - `-p, --pretty`: Pretty print JSON output
-- `--no-header`: Treat the first row as data, not headers (generates column_0, column_1, etc.)
+- `-n, --no-header`: Treat the first row as data, not headers (generates column_0, column_1, etc.)
 - `-h, --help`: Show help message
 - `-V, --version`: Show version information
 
@@ -140,10 +140,10 @@ Output:
 
 ### Example 3: CSV without headers
 
-For CSV files without header rows:
+For CSV files without header rows, use the `-n` option to generate default column names:
 
 ```bash
-ctj sample-no-header.csv --no-header -p
+ctj sample-no-header.csv -n -p
 ```
 
 Given a CSV file `sample-no-header.csv` without headers:
