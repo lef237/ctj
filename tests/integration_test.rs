@@ -1,6 +1,6 @@
 use std::fs;
-use std::process::{Command, Stdio};
 use std::io::Write;
+use std::process::{Command, Stdio};
 use tempfile::NamedTempFile;
 
 #[test]
@@ -204,7 +204,9 @@ fn test_cli_stdin_basic() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-        stdin.write_all(b"name,age,city\nJohn,30,Tokyo\nJane,25,Osaka\n").unwrap();
+        stdin
+            .write_all(b"name,age,city\nJohn,30,Tokyo\nJane,25,Osaka\n")
+            .unwrap();
     }
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -233,7 +235,7 @@ fn test_cli_stdin_pretty() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-    stdin.write_all(b"name,active\nTest,true\n").unwrap();
+        stdin.write_all(b"name,active\nTest,true\n").unwrap();
     }
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -259,7 +261,7 @@ fn test_cli_stdin_no_header() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-    stdin.write_all(b"John,30,Tokyo\nJane,25,Osaka\n").unwrap();
+        stdin.write_all(b"John,30,Tokyo\nJane,25,Osaka\n").unwrap();
     }
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -291,7 +293,9 @@ fn test_cli_stdin_with_output_file() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-    stdin.write_all(b"name,score\nAlice,95.5\nBob,80\n").unwrap();
+        stdin
+            .write_all(b"name,score\nAlice,95.5\nBob,80\n")
+            .unwrap();
     }
 
     let output = child.wait_with_output().expect("Failed to read stdout");
@@ -318,12 +322,12 @@ fn test_cli_stdin_empty() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-    stdin.write_all(b"").unwrap();
+        stdin.write_all(b"").unwrap();
     }
 
     let output = child.wait_with_output().expect("Failed to read stdout");
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert_eq!(stdout.trim(), "[]");
 }
@@ -339,7 +343,9 @@ fn test_cli_stdin_mixed_data_types() {
 
     {
         let stdin = child.stdin.as_mut().expect("Failed to open stdin");
-    stdin.write_all(b"name,age,score,active\nJohn,25,95.5,TRUE\nJane,30,100,False\n").unwrap();
+        stdin
+            .write_all(b"name,age,score,active\nJohn,25,95.5,TRUE\nJane,30,100,False\n")
+            .unwrap();
     }
 
     let output = child.wait_with_output().expect("Failed to read stdout");
